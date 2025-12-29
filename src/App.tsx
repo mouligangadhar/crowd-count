@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './hooks/useTheme';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 // Auth
 import { SplashScreen } from './pages/SplashScreen';
 import { LoginScreen } from './pages/LoginScreen';
@@ -40,6 +42,7 @@ import { AdminDashboardScreen } from './pages/AdminDashboardScreen';
 import { UserManagementScreen } from './pages/UserManagementScreen';
 export function App() {
   return <ThemeProvider>
+    <AuthProvider>
       <Router>
         <Routes>
           {/* Auth */}
@@ -80,8 +83,8 @@ export function App() {
           <Route path="/files" element={<FileManagerScreen />} />
 
           {/* User */}
-          <Route path="/profile" element={<ProfileScreen />} />
-          <Route path="/profile/theme" element={<ThemePreferencesScreen />} />
+          <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
+          <Route path="/profile/theme" element={<ProtectedRoute><ThemePreferencesScreen /></ProtectedRoute>} />
 
           {/* Admin */}
           <Route path="/admin" element={<AdminDashboardScreen />} />
@@ -91,5 +94,6 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-    </ThemeProvider>;
+    </AuthProvider>
+  </ThemeProvider>;
 }

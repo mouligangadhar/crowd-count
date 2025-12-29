@@ -1,260 +1,224 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangleIcon, BellIcon, FilterIcon, CheckCircleIcon, XCircleIcon, ClockIcon, MapPinIcon, CameraIcon, ChevronRightIcon, BellOffIcon } from 'lucide-react';
 import { MobileLayout } from '../components/layout/MobileLayout';
 import { BottomNavigation } from '../components/layout/BottomNavigation';
 import { Card } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
 import { Tabs } from '../components/ui/Tabs';
-type AlertType = 'critical' | 'warning' | 'info' | 'resolved';
-type Alert = {
-  id: number;
-  type: AlertType;
-  title: string;
-  message: string;
-  zone: string;
-  camera: string;
-  time: string;
-  timestamp: Date;
-  acknowledged: boolean;
-};
-const mockAlerts: Alert[] = [{
-  id: 1,
-  type: 'critical',
-  title: 'Overcrowding Detected',
-  message: 'Crowd density exceeded 95% threshold at Main Entrance',
-  zone: 'Zone A',
-  camera: 'CAM-001',
-  time: '2 min ago',
-  timestamp: new Date(),
-  acknowledged: false
-}, {
-  id: 2,
-  type: 'critical',
-  title: 'Emergency Exit Blocked',
-  message: 'Obstruction detected near emergency exit in Food Court',
-  zone: 'Zone B',
-  camera: 'CAM-005',
-  time: '8 min ago',
-  timestamp: new Date(),
-  acknowledged: false
-}, {
-  id: 3,
-  type: 'warning',
-  title: 'High Density Warning',
-  message: 'Approaching 80% capacity threshold',
-  zone: 'Zone C',
-  camera: 'CAM-003',
-  time: '15 min ago',
-  timestamp: new Date(),
-  acknowledged: true
-}, {
-  id: 4,
-  type: 'warning',
-  title: 'Unusual Movement Pattern',
-  message: 'Rapid crowd movement detected in parking area',
-  zone: 'Zone D',
-  camera: 'CAM-007',
-  time: '32 min ago',
-  timestamp: new Date(),
-  acknowledged: false
-}, {
-  id: 5,
-  type: 'info',
-  title: 'Camera Reconnected',
-  message: 'CAM-004 is back online after maintenance',
-  zone: 'System',
-  camera: 'CAM-004',
-  time: '1 hour ago',
-  timestamp: new Date(),
-  acknowledged: true
-}, {
-  id: 6,
-  type: 'resolved',
-  title: 'Overcrowding Resolved',
-  message: 'Crowd density returned to normal levels',
-  zone: 'Zone A',
-  camera: 'CAM-001',
-  time: '2 hours ago',
-  timestamp: new Date(),
-  acknowledged: true
-}];
-const alertStyles: Record<AlertType, {
-  bg: string;
-  border: string;
-  icon: string;
-  badge: 'danger' | 'warning' | 'info' | 'success';
-}> = {
-  critical: {
-    bg: 'bg-neon-red/10',
-    border: 'border-neon-red/30',
-    icon: 'text-neon-red',
-    badge: 'danger'
-  },
-  warning: {
-    bg: 'bg-neon-yellow/10',
-    border: 'border-neon-yellow/30',
-    icon: 'text-neon-yellow',
-    badge: 'warning'
-  },
-  info: {
-    bg: 'bg-neon-blue/10',
-    border: 'border-neon-blue/30',
-    icon: 'text-neon-blue',
-    badge: 'info'
-  },
-  resolved: {
-    bg: 'bg-neon-green/10',
-    border: 'border-neon-green/30',
-    icon: 'text-neon-green',
-    badge: 'success'
-  }
-};
+import { Badge } from '../components/ui/Badge';
+import { AlertTriangleIcon, CheckCircleIcon, XCircleIcon, InfoIcon } from 'lucide-react';
+import { useActiveAlerts } from '../hooks/useEnhancedCrowdData';
+import { acknowledgeAlert } from '../services/enhancedCrowdService';
+import { useCrowdStats, useLatestCrowdCount, useCrowdTrend } from '../hooks/useCrowdData';
+
 export function AlertCenterScreen() {
-  const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
-  const [alerts, setAlerts] = useState(mockAlerts);
+
+  // Use the NEW hook that fetches alerts from the Python project
+  const { alerts: dbAlerts, loading: alertsLoading } = useActiveAlerts();
+
+  // Stats for the "Current Status" card
+  const { stats } = useCrowdStats();
+  const { count: currentCount } = useLatestCrowdCount();
+  const { trend } = useCrowdTrend(30);
+
   const filterTabs = [{
     id: 'all',
-    label: 'All'
+    label: 'All',
+    count: dbAlerts.length
   }, {
     id: 'critical',
-    label: 'Critical'
+    label: 'Critical',
+    count: dbAlerts.filter(a => a.alert_type === 'critical').length
   }, {
     id: 'warning',
-    label: 'Warning'
+    label: 'Warning',
+    count: dbAlerts.filter(a => a.alert_type === 'warning').length
   }, {
-    id: 'resolved',
-    label: 'Resolved'
+    id: 'info',
+    label: 'Info',
+    count: dbAlerts.filter(a => a.alert_type === 'info' || a.alert_type === 'success').length
   }];
-  const filteredAlerts = alerts.filter(alert => {
-    if (filter === 'all') return true;
-    return alert.type === filter;
-  });
-  const handleAcknowledge = (id: number) => {
-    setAlerts(prev => prev.map(alert => alert.id === id ? {
-      ...alert,
-      acknowledged: true
-    } : alert));
+
+  const filteredAlerts = filter === 'all'
+    ? dbAlerts
+    : filter === 'info'
+      ? dbAlerts.filter(a => a.alert_type === 'info' || a.alert_type === 'success')
+      : dbAlerts.filter(a => a.alert_type === filter);
+
+  const getAlertIcon = (type: string) => {
+    switch (type) {
+      case 'critical':
+        return <XCircleIcon className="w-5 h-5" />;
+      case 'warning':
+        return <AlertTriangleIcon className="w-5 h-5" />;
+      case 'success':
+        return <CheckCircleIcon className="w-5 h-5" />;
+      default:
+        return <InfoIcon className="w-5 h-5" />;
+    }
   };
-  const criticalCount = alerts.filter(a => a.type === 'critical' && !a.acknowledged).length;
-  const warningCount = alerts.filter(a => a.type === 'warning' && !a.acknowledged).length;
+
+  const getAlertColor = (type: string) => {
+    switch (type) {
+      case 'critical':
+        return 'bg-neon-red/20 text-neon-red border-neon-red/30';
+      case 'warning':
+        return 'bg-neon-yellow/20 text-neon-yellow border-neon-yellow/30';
+      case 'success':
+        return 'bg-neon-green/20 text-neon-green border-neon-green/30';
+      default:
+        return 'bg-neon-blue/20 text-neon-blue border-neon-blue/30';
+    }
+  };
+
+  const handleAcknowledge = async (id: string) => {
+    await acknowledgeAlert(id);
+    // The real-time subscription will automatically remove it from the list
+  };
+
   return <>
-      <MobileLayout title="Alert Center" subtitle={`${criticalCount} critical • ${warningCount} warnings`} rightAction={<button className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-dark-700">
-            <BellOffIcon className="w-5 h-5" />
-          </button>}>
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <Card padding="sm" className={criticalCount > 0 ? 'pulse-critical' : ''}>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-neon-red/20">
-                <AlertTriangleIcon className="w-5 h-5 text-neon-red" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{criticalCount}</p>
-                <p className="text-xs text-slate-400">Critical</p>
-              </div>
-            </div>
-          </Card>
-          <Card padding="sm">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-neon-yellow/20">
-                <BellIcon className="w-5 h-5 text-neon-yellow" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{warningCount}</p>
-                <p className="text-xs text-slate-400">Warnings</p>
-              </div>
-            </div>
-          </Card>
-        </div>
+    <MobileLayout title="Alert Center" subtitle="Real-time notifications">
+      {/* Summary cards */}
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <Card padding="md" className="text-center">
+          <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-neon-red/20 flex items-center justify-center">
+            <XCircleIcon className="w-5 h-5 text-neon-red" />
+          </div>
+          <p className="text-2xl font-bold text-white">
+            {dbAlerts.filter(a => a.alert_type === 'critical').length}
+          </p>
+          <p className="text-xs text-slate-400">Critical</p>
+        </Card>
+        <Card padding="md" className="text-center">
+          <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-neon-yellow/20 flex items-center justify-center">
+            <AlertTriangleIcon className="w-5 h-5 text-neon-yellow" />
+          </div>
+          <p className="text-2xl font-bold text-white">
+            {dbAlerts.filter(a => a.alert_type === 'warning').length}
+          </p>
+          <p className="text-xs text-slate-400">Warning</p>
+        </Card>
+        <Card padding="md" className="text-center">
+          <div className="w-10 h-10 mx-auto mb-2 rounded-lg bg-neon-blue/20 flex items-center justify-center">
+            <InfoIcon className="w-5 h-5 text-neon-blue" />
+          </div>
+          <p className="text-2xl font-bold text-white">
+            {dbAlerts.filter(a => a.alert_type === 'info' || a.alert_type === 'success').length}
+          </p>
+          <p className="text-xs text-slate-400">Info</p>
+        </Card>
+      </div>
 
-        {/* Filter tabs */}
-        <div className="mb-4">
-          <Tabs tabs={filterTabs} activeTab={filter} onChange={setFilter} variant="pills" />
-        </div>
+      {/* Filter tabs */}
+      <div className="mb-4">
+        <Tabs
+          tabs={filterTabs.map(tab => ({
+            id: tab.id,
+            label: `${tab.label} (${tab.count})`
+          }))}
+          activeTab={filter}
+          onChange={setFilter}
+          variant="pills"
+        />
+      </div>
 
-        {/* Alert list */}
-        <div className="space-y-3">
-          <AnimatePresence>
-            {filteredAlerts.map((alert, index) => {
-            const styles = alertStyles[alert.type];
-            return <motion.div key={alert.id} initial={{
-              opacity: 0,
-              y: 10
-            }} animate={{
-              opacity: 1,
-              y: 0
-            }} exit={{
-              opacity: 0,
-              x: -100
-            }} transition={{
-              delay: index * 0.05
-            }}>
-                  <Card padding="none" className={`overflow-hidden border ${styles.border} ${alert.type === 'critical' && !alert.acknowledged ? 'pulse-critical' : ''}`}>
-                    <div className={`${styles.bg} p-4`}>
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg bg-dark-800/50 ${styles.icon}`}>
-                          {alert.type === 'resolved' ? <CheckCircleIcon className="w-5 h-5" /> : <AlertTriangleIcon className="w-5 h-5" />}
+      {/* Alerts list */}
+      <div className="space-y-3">
+        {alertsLoading ? (
+          <div className="flex justify-center py-10">
+            <div className="w-6 h-6 border-2 border-neon-cyan border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <AnimatePresence mode="popLayout">
+            {filteredAlerts.length > 0 ? (
+              filteredAlerts.map((alert, index) => (
+                <motion.div
+                  key={alert.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card
+                    padding="md"
+                    className={alert.alert_type === 'critical' ? 'pulse-critical' : ''}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 rounded-lg ${getAlertColor(alert.alert_type)}`}>
+                        {getAlertIcon(alert.alert_type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h3 className="font-semibold text-white text-sm">
+                            {alert.title}
+                          </h3>
+                          <Badge variant={alert.alert_type as any} size="sm">
+                            {alert.alert_type}
+                          </Badge>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className="font-semibold text-white">
-                              {alert.title}
-                            </h3>
-                            <Badge variant={styles.badge} size="sm">
-                              {alert.type}
-                            </Badge>
+                        <p className="text-sm text-slate-300 mb-2">
+                          {alert.message}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span>{new Date(alert.timestamp).toLocaleTimeString()}</span>
+                            <span>•</span>
+                            <span>{alert.zone || 'Camera'}</span>
                           </div>
-                          <p className="text-sm text-slate-300 mb-2">
-                            {alert.message}
-                          </p>
-                          <div className="flex items-center gap-3 text-xs text-slate-400">
-                            <span className="flex items-center gap-1">
-                              <MapPinIcon className="w-3 h-3" />
-                              {alert.zone}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <CameraIcon className="w-3 h-3" />
-                              {alert.camera}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <ClockIcon className="w-3 h-3" />
-                              {alert.time}
-                            </span>
-                          </div>
+                          <button
+                            onClick={() => handleAcknowledge(alert.id)}
+                            className="text-xs text-neon-cyan hover:underline"
+                          >
+                            Acknowledge
+                          </button>
                         </div>
                       </div>
-
-                      {/* Actions */}
-                      {!alert.acknowledged && alert.type !== 'resolved' && <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dark-600/50">
-                          <Button size="sm" variant="secondary" onClick={() => handleAcknowledge(alert.id)} className="flex-1">
-                            Acknowledge
-                          </Button>
-                          <Button size="sm" onClick={() => navigate(`/camera/${alert.id}`)} className="flex-1">
-                            View Camera
-                          </Button>
-                        </div>}
-                      {alert.acknowledged && <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dark-600/50 text-sm text-slate-500">
-                          <CheckCircleIcon className="w-4 h-4" />
-                          <span>Acknowledged</span>
-                        </div>}
                     </div>
                   </Card>
-                </motion.div>;
-          })}
+                </motion.div>
+              ))
+            ) : (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <Card>
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-neon-green/20 flex items-center justify-center">
+                      <CheckCircleIcon className="w-8 h-8 text-neon-green" />
+                    </div>
+                    <h3 className="text-white font-semibold mb-2">All Clear!</h3>
+                    <p className="text-sm text-slate-400">
+                      No active alerts from your camera system.
+                    </p>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
           </AnimatePresence>
-        </div>
+        )}
+      </div>
 
-        {filteredAlerts.length === 0 && <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-dark-700 flex items-center justify-center">
-              <BellIcon className="w-8 h-8 text-slate-500" />
+      {/* Info card */}
+      {stats && currentCount !== null && (
+        <Card variant="neon" glowColor="cyan" className="mt-4">
+          <h3 className="font-semibold text-white mb-3">System Status</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Occupancy</span>
+              <span className="font-medium text-white">{currentCount} people</span>
             </div>
-            <p className="text-slate-400">No alerts to display</p>
-          </div>}
-      </MobileLayout>
-      <BottomNavigation />
-    </>;
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Avg Density</span>
+              <span className="font-medium text-white">{stats.averageCount}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Trend</span>
+              <span className={`font-medium ${trend === 'increasing' ? 'text-neon-green' : 'text-neon-red'}`}>
+                {trend === 'increasing' ? '↑ Increasing' : trend === 'decreasing' ? '↓ Decreasing' : 'Stable'}
+              </span>
+            </div>
+          </div>
+        </Card>
+      )}
+    </MobileLayout>
+    <BottomNavigation />
+  </>;
 }
