@@ -1,21 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Replace these with your actual Supabase project credentials
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Hardcoded Supabase credentials for direct deployment
+const supabaseUrl = 'https://wyppwghdbwiiujgglqdf.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5cHB3Z2hkYndpaXVqZ2dscWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4NTAxOTksImV4cCI6MjA4MjQyNjE5OX0.uKYC-ZAIjeQYwK1hijvz0CatTQJo3Zy2zz8L0QJWhZw';
 
-if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_URL') {
-    console.error('Missing Supabase environment variables. Please check your .env file or Netlify settings.');
-}
-
-export const supabase = createClient(
-    supabaseUrl || 'https://placeholder-url.supabase.co',
-    supabaseAnonKey || 'placeholder-key',
-    {
-        auth: {
-            autoRefreshToken: true,
-            persistSession: true,
-            detectSessionInUrl: true
-        }
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
     }
-);
+});
