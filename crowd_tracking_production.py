@@ -42,11 +42,10 @@ def get_or_create_camera():
         result = supabase.table("cameras").select("*").eq("name", CAMERA_NAME).execute()
         if result.data:
             id_ = result.data[0]['id']
-            # Update camera with latest info and MAX_COUNT
+            # Update camera with latest info
             supabase.table("cameras").update({
                 "status": "active", 
-                "last_seen": datetime.now().isoformat(),
-                "max_capacity": MAX_COUNT
+                "last_seen": datetime.now().isoformat()
             }).eq("id", id_).execute()
             return id_
         
@@ -56,8 +55,7 @@ def get_or_create_camera():
             "location": CAMERA_LOCATION, 
             "zone": CAMERA_ZONE, 
             "line_y": LINE_Y, 
-            "status": "active",
-            "max_capacity": MAX_COUNT
+            "status": "active"
         }).execute()
         return res.data[0]['id']
     except Exception as e:

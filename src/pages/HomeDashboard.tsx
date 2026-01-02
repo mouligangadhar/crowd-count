@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { UsersIcon, ActivityIcon, BellIcon, ChevronRightIcon, TrendingUpIcon, TrendingDownIcon, ArrowUpIcon, ArrowDownIcon, AlertCircleIcon } from 'lucide-react';
+import { ActivityIcon, BellIcon, ChevronRightIcon, TrendingUpIcon, TrendingDownIcon, ArrowUpIcon, ArrowDownIcon, AlertCircleIcon } from 'lucide-react';
 import { MobileLayout } from '../components/layout/MobileLayout';
 import { BottomNavigation } from '../components/layout/BottomNavigation';
 import { Card } from '../components/ui/Card';
@@ -41,7 +41,7 @@ export function HomeDashboard() {
 
   // Get current camera capacity info
   const latestCam = cameraData && cameraData.length > 0 ? cameraData[0] : null;
-  const maxCapacity = latestCam?.max_capacity || 100;
+  const maxCapacity = latestCam?.max_capacity || 50;
   const remainingSpace = Math.max(0, maxCapacity - (currentCount || 0));
   const occupancyPercentage = Math.min(100, Math.round(((currentCount || 0) / maxCapacity) * 100));
 
@@ -81,7 +81,7 @@ export function HomeDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant={occupancyPercentage > 90 ? "critical" : occupancyPercentage > 75 ? "warning" : "success"} dot pulse>
+            <Badge variant={occupancyPercentage > 90 ? "danger" : occupancyPercentage > 75 ? "warning" : "success"} dot pulse>
               {occupancyPercentage > 90 ? "Critical" : occupancyPercentage > 75 ? "Near Limit" : "Live Data"}
             </Badge>
             <motion.button whileTap={{
@@ -120,12 +120,12 @@ export function HomeDashboard() {
                   </motion.div>
                 </div>
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${occupancyPercentage > 90 ? 'border-neon-red bg-neon-red/10' :
-                    occupancyPercentage > 75 ? 'border-orange-500 bg-orange-500/10' :
-                      'border-neon-cyan bg-neon-cyan/10'
+                  occupancyPercentage > 75 ? 'border-orange-500 bg-orange-500/10' :
+                    'border-neon-cyan bg-neon-cyan/10'
                   }`}>
                   <span className={`text-sm font-bold ${occupancyPercentage > 90 ? 'text-neon-red' :
-                      occupancyPercentage > 75 ? 'text-orange-500' :
-                        'text-neon-cyan'
+                    occupancyPercentage > 75 ? 'text-orange-500' :
+                      'text-neon-cyan'
                     }`}>
                     {occupancyPercentage}%
                   </span>
@@ -138,8 +138,8 @@ export function HomeDashboard() {
                   initial={{ width: 0 }}
                   animate={{ width: `${occupancyPercentage}%` }}
                   className={`h-full ${occupancyPercentage > 90 ? 'bg-neon-red' :
-                      occupancyPercentage > 75 ? 'bg-orange-500' :
-                        'bg-neon-cyan'
+                    occupancyPercentage > 75 ? 'bg-orange-500' :
+                      'bg-neon-cyan'
                     }`}
                 />
               </div>
@@ -233,8 +233,8 @@ export function HomeDashboard() {
                 <Card padding="sm" className={alert.alert_type === 'critical' ? 'pulse-critical' : ''}>
                   <div className="flex items-start gap-3">
                     <div className={`p-2 rounded-lg ${alert.alert_type === 'critical' ? 'bg-neon-red/20 text-neon-red' :
-                        alert.alert_type === 'warning' ? 'bg-neon-yellow/20 text-neon-yellow' :
-                          'bg-neon-blue/20 text-neon-blue'
+                      alert.alert_type === 'warning' ? 'bg-neon-yellow/20 text-neon-yellow' :
+                        'bg-neon-blue/20 text-neon-blue'
                       }`}>
                       <AlertCircleIcon className="w-4 h-4" />
                     </div>
