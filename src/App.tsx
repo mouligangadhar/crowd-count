@@ -53,42 +53,42 @@ export function App() {
           <Route path="/role-selection" element={<RoleSelectionScreen />} />
 
           {/* Main */}
-          <Route path="/home" element={<HomeDashboard />} />
-          <Route path="/cameras" element={<CameraListScreen />} />
-          <Route path="/camera/add" element={<AddCameraScreen />} />
-          <Route path="/camera/:id" element={<LiveFeedScreen />} />
-          <Route path="/camera/health" element={<CameraHealthScreen />} />
+          <Route path="/home" element={<ProtectedRoute><HomeDashboard /></ProtectedRoute>} />
+          <Route path="/cameras" element={<ProtectedRoute><CameraListScreen /></ProtectedRoute>} />
+          <Route path="/camera/add" element={<ProtectedRoute><AddCameraScreen /></ProtectedRoute>} />
+          <Route path="/camera/:id" element={<ProtectedRoute><LiveFeedScreen /></ProtectedRoute>} />
+          <Route path="/camera/health" element={<ProtectedRoute><CameraHealthScreen /></ProtectedRoute>} />
 
-          <Route path="/heatmap" element={<HeatmapScreen />} />
-          <Route path="/analytics" element={<AnalyticsScreen />} />
-          <Route path="/alerts" element={<AlertCenterScreen />} />
-          <Route path="/map" element={<AreaMapScreen />} />
-          <Route path="/comparison" element={<ZoneComparisonScreen />} />
-          <Route path="/thresholds" element={<ThresholdSettingsScreen />} />
+          <Route path="/heatmap" element={<ProtectedRoute><HeatmapScreen /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><AnalyticsScreen /></ProtectedRoute>} />
+          <Route path="/alerts" element={<ProtectedRoute><AlertCenterScreen /></ProtectedRoute>} />
+          <Route path="/map" element={<ProtectedRoute><AreaMapScreen /></ProtectedRoute>} />
+          <Route path="/comparison" element={<ProtectedRoute><ZoneComparisonScreen /></ProtectedRoute>} />
+          <Route path="/thresholds" element={<ProtectedRoute><ThresholdSettingsScreen /></ProtectedRoute>} />
 
           {/* IoT */}
-          <Route path="/iot" element={<IoTDashboardScreen />} />
-          <Route path="/sensor/:id" element={<SensorDetailScreen />} />
+          <Route path="/iot" element={<ProtectedRoute><IoTDashboardScreen /></ProtectedRoute>} />
+          <Route path="/sensor/:id" element={<ProtectedRoute><SensorDetailScreen /></ProtectedRoute>} />
 
           {/* Operations */}
-          <Route path="/incident/report" element={<IncidentReportScreen />} />
-          <Route path="/chat" element={<TeamChatScreen />} />
-          <Route path="/staff" element={<StaffAllocationScreen />} />
-          <Route path="/prediction" element={<FlowPredictionScreen />} />
-          <Route path="/event-config" element={<EventConfigScreen />} />
-          <Route path="/queue" element={<QueueMonitorScreen />} />
+          <Route path="/incident/report" element={<ProtectedRoute><IncidentReportScreen /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><TeamChatScreen /></ProtectedRoute>} />
+          <Route path="/staff" element={<ProtectedRoute><StaffAllocationScreen /></ProtectedRoute>} />
+          <Route path="/prediction" element={<ProtectedRoute><FlowPredictionScreen /></ProtectedRoute>} />
+          <Route path="/event-config" element={<ProtectedRoute><EventConfigScreen /></ProtectedRoute>} />
+          <Route path="/queue" element={<ProtectedRoute><QueueMonitorScreen /></ProtectedRoute>} />
 
           {/* Reporting */}
-          <Route path="/reports" element={<ReportGeneratorScreen />} />
-          <Route path="/files" element={<FileManagerScreen />} />
+          <Route path="/reports" element={<ProtectedRoute><ReportGeneratorScreen /></ProtectedRoute>} />
+          <Route path="/files" element={<ProtectedRoute><FileManagerScreen /></ProtectedRoute>} />
 
           {/* User */}
           <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
           <Route path="/profile/theme" element={<ProtectedRoute><ThemePreferencesScreen /></ProtectedRoute>} />
 
           {/* Admin */}
-          <Route path="/admin" element={<AdminDashboardScreen />} />
-          <Route path="/admin/users" element={<UserManagementScreen />} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboardScreen /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><UserManagementScreen /></ProtectedRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
